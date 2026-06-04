@@ -21,12 +21,8 @@ Host this repo on Vercel (or any static host), then drop in this snippet — the
 ```html
 <div style="max-width: 420px; margin: 0 auto;">
   <div style="position: relative; width: 100%; aspect-ratio: 390 / 818;">
-    <iframe
-      src="[https://soulsync-my-journey.vercel.app]"
-      title="SoulSync · My Journey prototype"
-      loading="lazy"
-      style="position: absolute; inset: 0; width: 100%; height: 100%; border: 0; border-radius: 24px;"
-      allowfullscreen></iframe>
+    <iframe src="https://YOUR-PROJECT.vercel.app" title="SoulSync prototype" loading="lazy"
+      style="position: absolute; inset: 0; width: 100%; height: 100%; border: 0; border-radius: 24px;" allowfullscreen></iframe>
   </div>
 </div>
 ```
