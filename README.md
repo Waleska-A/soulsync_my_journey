@@ -4,7 +4,7 @@ SoulSync helps customers track their personal journey *between* readings: life e
 
 ## Live demo
 
-▶️ **[View the prototype](https://YOUR-PROJECT.vercel.app)**
+▶️ **[View the prototype](https://soulsync-my-journey.vercel.app/)**
 
 > Replace the link above with your Vercel URL once deployed.
 
