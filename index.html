@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SoulSync · My Journey — embeddable preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#fcf9f4; --cream-2:#f5ede1; --paper:#ffffff;
+  --ink:#2b221e; --muted:#6e625a; --faint:#a1948a;
+  --crimson:#a4161a; --crimson-deep:#7c1014; --crimson-bright:#c41e25;
+  --gold:#bd9550; --gold-soft:#d8b876; --gold-deep:#9a7635; --gold-ink:#8a6a2e;
+  --berry:#a8456a; --sage:#6f8a6f;
+  --line:#ece1d3; --line-strong:rgba(189,149,80,.42);
+  --ok:#4f8a5b;
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --sans:'Outfit',system-ui,sans-serif;
+  --r-lg:26px; --r-md:18px; --r-sm:12px;
+  --shadow:0 18px 50px -16px rgba(90,40,20,.32);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;padding:0;background:transparent;overflow:hidden;font-family:var(--sans);color:var(--ink)}
+.stage{display:flex;gap:34px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:1240px}
+.intro{max-width:300px;color:var(--muted)}
+.intro .mark{display:flex;align-items:center;gap:11px;margin-bottom:18px}
+.intro .mark svg{width:36px;height:36px}
+.intro .mark b{font-family:var(--serif);font-size:25px;letter-spacing:.5px;color:var(--ink);font-weight:600}
+.intro h1{font-family:var(--serif);font-size:34px;line-height:1.1;color:var(--ink);font-weight:600;margin-bottom:14px}
+.intro h1 em{color:var(--crimson);font-style:italic}
+.intro p{font-size:14.5px;line-height:1.65;margin-bottom:14px}
+.intro .tag{display:inline-block;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--crimson);border:1px solid rgba(164,22,26,.3);padding:6px 12px;border-radius:30px;margin-bottom:20px}
+.intro .nav-hint{font-size:12.5px;color:var(--faint);border-top:1px solid var(--line);padding-top:14px;margin-top:6px;line-height:1.6}
+
+/* ---------- PHONE ---------- */
+.phone{
+  width:390px;height:818px;border-radius:52px;position:relative;flex:0 0 auto;
+  background:linear-gradient(160deg,#8c1418,#5c0d11);
+  padding:13px;box-shadow:var(--shadow), 0 0 0 2px rgba(120,20,24,.25), inset 0 0 0 1px rgba(255,255,255,.06);
+}
+.screen-wrap{
+  width:100%;height:100%;border-radius:42px;overflow:hidden;position:relative;
+  background:
+    radial-gradient(560px 360px at 84% -8%, rgba(189,149,80,.14), transparent 60%),
+    radial-gradient(480px 420px at -12% 10%, rgba(164,22,26,.06), transparent 55%),
+    linear-gradient(178deg,#fdfaf5 0%,#f7efe3 100%);
+}
+.stars{position:absolute;inset:0;pointer-events:none;opacity:.5;z-index:0}
+.stars i{position:absolute;background:var(--gold-soft);border-radius:50%;opacity:.4;animation:tw 5s ease-in-out infinite}
+@keyframes tw{0%,100%{opacity:.12}50%{opacity:.55}}
+.notch{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:120px;height:27px;background:#5c0d11;border-radius:18px;z-index:60}
+.statusbar{position:absolute;top:0;left:0;right:0;height:46px;display:flex;align-items:center;justify-content:space-between;padding:18px 26px 0;font-size:13px;font-weight:600;z-index:55;color:var(--ink)}
+.statusbar .dots{display:flex;gap:5px;align-items:center}
+.statusbar svg{width:16px;height:12px;opacity:.85}
+
+/* ---------- SCREENS ---------- */
+.screen{position:absolute;inset:0;padding-top:46px;display:none;flex-direction:column;z-index:5}
+.screen.active{display:flex;animation:fade .42s cubic-bezier(.2,.7,.2,1)}
+@keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:6px 20px 108px;scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+.scroll.nonav{padding-bottom:28px}
+
+/* topbar */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:6px 20px 10px}
+.topbar .ttl{font-family:var(--serif);font-size:25px;font-weight:600;color:var(--ink)}
+.topbar .back{font-size:22px;color:var(--crimson);cursor:pointer;width:38px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--line);background:var(--paper)}
+.topbar .ic{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--paper);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:var(--crimson)}
+
+/* generic */
+.eyebrow{font-size:10.5px;letter-spacing:2.4px;text-transform:uppercase;color:var(--crimson);font-weight:600}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);padding:17px;box-shadow:0 10px 24px -18px rgba(90,40,20,.4)}
+.card+.card{margin-top:13px}
+.muted{color:var(--muted)} .faint{color:var(--faint)}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:none;cursor:pointer;font-family:var(--sans);
+  font-size:15px;font-weight:600;padding:15px;border-radius:30px;color:#fff;letter-spacing:.3px;
+  background:linear-gradient(135deg,var(--crimson-bright),var(--crimson-deep));box-shadow:0 12px 26px -10px rgba(164,22,26,.55)}
+.btn:active{transform:scale(.98)}
+.btn.ghost{background:var(--paper);color:var(--crimson);border:1px solid rgba(164,22,26,.35);box-shadow:none}
+.btn.sm{padding:11px 18px;width:auto;font-size:13.5px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 6px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;font-size:12.5px;padding:8px 14px;border-radius:30px;border:1px solid var(--line);background:var(--paper);color:var(--muted);cursor:pointer;white-space:nowrap;transition:.2s}
+.chip.on{background:rgba(164,22,26,.08);color:var(--crimson);border-color:rgba(164,22,26,.4);font-weight:600}
+
+/* ---------- WELCOME ---------- */
+#welcome .scroll{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:36px 34px}
+.orb{width:138px;height:138px;border-radius:50%;position:relative;margin:0 auto 26px;
+  background:radial-gradient(circle at 36% 30%,#e7c98a,#c79a4e 42%,#a4161a 100%);
+  box-shadow:0 0 60px -8px rgba(164,22,26,.45), inset 0 0 40px rgba(255,255,255,.28);
+  animation:float 6s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.orb::after{content:"";position:absolute;inset:-16px;border-radius:50%;border:1px solid var(--line-strong);animation:pulse 4s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.08);opacity:.15}}
+.orb .glyph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:52px}
+#welcome h2{font-family:var(--serif);font-size:44px;font-weight:600;line-height:1.02;margin-bottom:4px;color:var(--ink)}
+#welcome .brand-line{font-size:10.5px;letter-spacing:3px;text-transform:uppercase;color:var(--crimson);margin-bottom:3px}
+#welcome .brand-tag{font-family:var(--serif);font-style:italic;font-size:15px;color:var(--gold-deep);margin-bottom:22px}
+#welcome p.lead{font-size:15.5px;color:var(--muted);line-height:1.65;margin-bottom:28px;max-width:300px}
+#welcome .feat{display:flex;gap:12px;align-items:flex-start;text-align:left;width:100%;margin-bottom:15px}
+#welcome .feat .e{font-size:19px;flex:0 0 auto;width:42px;height:42px;border-radius:13px;background:rgba(189,149,80,.12);border:1px solid var(--line);display:flex;align-items:center;justify-content:center}
+#welcome .feat b{font-size:14.5px;font-weight:600;display:block;margin-bottom:2px;color:var(--ink)}
+#welcome .feat span{font-size:12.5px;color:var(--muted);line-height:1.45}
+#welcome .actions{width:100%;margin-top:14px}
+
+/* hero greeting */
+.hero{padding:8px 0 4px}
+.hero .hi{font-family:var(--serif);font-size:31px;font-weight:600;line-height:1.12;color:var(--ink)}
+.hero .hi em{color:var(--crimson);font-style:italic}
+.hero .sub{font-size:13px;color:var(--muted);margin-top:3px}
+
+/* prompt card */
+.prompt-card{background:linear-gradient(140deg,rgba(164,22,26,.07),rgba(189,149,80,.16));border:1px solid var(--line-strong)}
+.prompt-card .q{font-family:var(--serif);font-size:22px;font-weight:500;line-height:1.28;margin:8px 0 16px;font-style:italic;color:var(--ink)}
+
+/* stat row */
+.stats{display:flex;gap:10px}
+.stat{flex:1;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-sm);padding:13px 11px;text-align:center}
+.stat .n{font-family:var(--serif);font-size:28px;font-weight:600;color:var(--crimson);line-height:1}
+.stat .l{font-size:10.5px;color:var(--muted);margin-top:5px;letter-spacing:.3px}
+
+/* AI insight */
+.ai{display:flex;gap:11px;align-items:flex-start}
+.ai .av{flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 36% 30%,#e7c98a,#bd9550 55%,#a4161a);display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;box-shadow:0 4px 12px -2px rgba(164,22,26,.4)}
+.ai .body p{font-size:13.5px;line-height:1.55;color:var(--ink)}
+.ai .label{font-size:10px;letter-spacing:1.6px;text-transform:uppercase;color:var(--gold-ink);font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+
+/* quick actions */
+.qa{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.qa button{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-sm);padding:15px 13px;text-align:left;cursor:pointer;color:var(--ink);font-family:var(--sans);transition:.2s;box-shadow:0 8px 18px -16px rgba(90,40,20,.4)}
+.qa button:active{transform:scale(.97)}
+.qa .e{font-size:20px;display:block;margin-bottom:9px}
+.qa b{font-size:13.5px;font-weight:600;display:block}
+.qa span{font-size:11px;color:var(--muted)}
+
+/* section head */
+.shead{display:flex;align-items:center;justify-content:space-between;margin:22px 2px 11px}
+.shead h3{font-family:var(--serif);font-size:21px;font-weight:600;color:var(--ink)}
+.shead a{font-size:12px;color:var(--crimson);cursor:pointer;font-weight:500}
+
+/* ---------- TIMELINE ---------- */
+.tl{position:relative;padding-left:34px;margin-top:4px}
+.tl::before{content:"";position:absolute;left:13px;top:6px;bottom:6px;width:2px;background:linear-gradient(var(--crimson),var(--gold),transparent)}
+.node{position:relative;margin-bottom:16px}
+.node .dot{position:absolute;left:-28px;top:4px;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;
+  background:var(--paper);border:2px solid var(--gold);box-shadow:0 0 0 4px var(--cream)}
+.node .date{font-size:11px;color:var(--crimson);letter-spacing:.5px;margin-bottom:5px;font-weight:600}
+.node .ncard{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);padding:14px;box-shadow:0 10px 22px -18px rgba(90,40,20,.4)}
+.node .ncard b{font-size:14.5px;font-weight:600;display:block;margin-bottom:3px;color:var(--ink)}
+.node .ncard p{font-size:12.5px;color:var(--muted);line-height:1.5}
+.node .kind{font-size:9.5px;letter-spacing:1.4px;text-transform:uppercase;font-weight:700;margin-bottom:7px;display:inline-block;padding:3px 8px;border-radius:20px}
+.k-event{color:var(--gold-ink);background:rgba(189,149,80,.16)}
+.k-reflect{color:var(--sage);background:rgba(111,138,111,.14)}
+.k-reading{color:var(--berry);background:rgba(168,69,106,.13)}
+.k-mile{color:var(--crimson);background:rgba(164,22,26,.1)}
+/* theme cluster */
+.theme-band{background:linear-gradient(135deg,rgba(164,22,26,.07),rgba(189,149,80,.14));border:1px solid var(--line-strong);border-radius:var(--r-md);padding:14px 15px;margin:6px 0 18px}
+.theme-band .th{display:flex;align-items:center;gap:8px;font-family:var(--serif);font-size:18px;font-weight:600;margin-bottom:4px;color:var(--ink)}
+.theme-band .th .pp{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:#fff;background:var(--crimson);padding:3px 8px;border-radius:20px;font-family:var(--sans);font-weight:600}
+.theme-band p{font-size:12.5px;color:var(--muted);line-height:1.55}
+
+/* mood picker */
+.moods{display:flex;justify-content:space-between;gap:6px}
+.moods .m{flex:1;border:1px solid var(--line);border-radius:14px;padding:11px 4px;text-align:center;cursor:pointer;transition:.2s;background:var(--paper)}
+.moods .m.on{border-color:var(--crimson);background:rgba(164,22,26,.07)}
+.moods .m .e{font-size:24px;display:block}
+.moods .m .l{font-size:9.5px;color:var(--muted);margin-top:4px}
+.field{margin-top:16px}
+.field label{font-size:12px;letter-spacing:.6px;color:var(--muted);display:block;margin-bottom:8px;font-weight:600}
+.field input,.field textarea,.field select{width:100%;background:var(--paper);border:1px solid var(--line);border-radius:13px;padding:13px;color:var(--ink);font-family:var(--sans);font-size:14px;outline:none;resize:none}
+.field input:focus,.field textarea:focus{border-color:var(--crimson)}
+.field textarea{min-height:78px;line-height:1.5}
+.range{-webkit-appearance:none;width:100%;height:6px;border-radius:6px;background:linear-gradient(90deg,var(--crimson),var(--gold));outline:none;margin-top:6px}
+.range::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--crimson);box-shadow:0 0 0 4px rgba(164,22,26,.2);cursor:pointer}
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg .o{font-size:12.5px;padding:9px 13px;border-radius:11px;border:1px solid var(--line);color:var(--muted);cursor:pointer;background:var(--paper)}
+.seg .o.on{border-color:var(--crimson);color:var(--crimson);background:rgba(164,22,26,.07);font-weight:600}
+
+/* question keeper */
+.qitem{display:flex;gap:12px;align-items:flex-start;padding:15px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);margin-bottom:11px;box-shadow:0 10px 22px -18px rgba(90,40,20,.4)}
+.qitem .mk{font-family:var(--serif);font-size:30px;color:var(--gold);line-height:.7;flex:0 0 auto}
+.qitem .qt{font-size:14px;line-height:1.4;font-weight:600;margin-bottom:6px;color:var(--ink)}
+.qitem .meta{font-size:11px;color:var(--faint)}
+.qitem .reconnect{font-size:11px;color:var(--sage);margin-top:8px;display:flex;gap:6px;align-items:flex-start;line-height:1.4;background:rgba(111,138,111,.08);border-radius:10px;padding:8px 10px}
+
+/* insights */
+.pattern{border-radius:var(--r-md);padding:16px;margin-bottom:13px;border:1px solid var(--line)}
+.pattern h4{font-family:var(--serif);font-size:18px;font-weight:600;margin-bottom:7px;display:flex;align-items:center;gap:8px;color:var(--ink)}
+.pattern p{font-size:13px;line-height:1.55;color:var(--muted)}
+.bar{height:8px;border-radius:8px;background:rgba(43,34,30,.07);overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;border-radius:8px;background:linear-gradient(90deg,var(--gold),var(--crimson))}
+.trend{display:flex;align-items:center;gap:10px;margin-top:11px}
+.trend .lab{font-size:12px;color:var(--muted);width:74px;flex:0 0 auto}
+
+/* monthly */
+.month-hero{text-align:center;padding:22px 16px;background:linear-gradient(150deg,rgba(164,22,26,.1),rgba(189,149,80,.16));border:1px solid var(--line-strong);border-radius:var(--r-lg)}
+.month-hero .mo{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--crimson);font-weight:600}
+.month-hero h2{font-family:var(--serif);font-size:32px;font-weight:600;margin:6px 0 4px;color:var(--ink)}
+.month-hero p{font-size:13px;color:var(--muted);line-height:1.5;font-style:italic;font-family:var(--serif);font-size:15px}
+.kv{display:flex;align-items:flex-start;gap:11px;padding:13px 0;border-bottom:1px solid var(--line)}
+.kv:last-child{border-bottom:none}
+.kv .e{font-size:17px;flex:0 0 auto;width:34px;height:34px;border-radius:10px;background:rgba(189,149,80,.12);display:flex;align-items:center;justify-content:center}
+.kv b{font-size:13.5px;display:block;margin-bottom:2px;color:var(--ink)}
+.kv span{font-size:12.5px;color:var(--muted);line-height:1.45}
+
+/* reading history */
+.read{padding:15px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);margin-bottom:12px;box-shadow:0 10px 22px -18px rgba(90,40,20,.4)}
+.read .rhead{display:flex;align-items:center;gap:11px;margin-bottom:11px}
+.read .ava{width:44px;height:44px;border-radius:50%;flex:0 0 auto;background:linear-gradient(135deg,var(--crimson),var(--gold));display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:19px;font-weight:600;color:#fff}
+.read .nm{font-size:14px;font-weight:600;color:var(--ink)}
+.read .dt{font-size:11px;color:var(--faint)}
+.read .type{margin-left:auto;font-size:10px;color:var(--berry);background:rgba(168,69,106,.1);padding:4px 9px;border-radius:20px;font-weight:600}
+.read p.sum{font-size:12.5px;color:var(--muted);line-height:1.55;margin-bottom:10px}
+.read .tags{display:flex;gap:6px;flex-wrap:wrap}
+.read .tags span{font-size:10.5px;color:var(--crimson);border:1px solid var(--line);padding:4px 9px;border-radius:20px}
+
+/* profile */
+.pcard{text-align:center;padding:24px 16px}
+.pcard .pa{width:84px;height:84px;border-radius:50%;margin:0 auto 12px;background:linear-gradient(140deg,var(--crimson-bright),var(--gold));display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:34px;font-weight:600;color:#fff;box-shadow:0 10px 26px -8px rgba(164,22,26,.4)}
+.pcard h2{font-family:var(--serif);font-size:25px;font-weight:600;color:var(--ink)}
+.pcard .since{font-size:12px;color:var(--gold-deep);letter-spacing:.5px;margin-top:3px}
+.prow{display:flex;align-items:center;gap:13px;padding:15px 4px;border-bottom:1px solid var(--line);cursor:pointer}
+.prow:last-child{border-bottom:none}
+.prow .e{font-size:17px;width:34px;text-align:center}
+.prow .t{font-size:14px;flex:1;color:var(--ink)}
+.prow .v{font-size:12.5px;color:var(--muted)}
+.prow .ch{color:var(--faint);font-size:16px}
+.toggle{width:44px;height:26px;border-radius:20px;background:rgba(43,34,30,.18);position:relative;cursor:pointer;transition:.25s;flex:0 0 auto}
+.toggle.on{background:var(--crimson)}
+.toggle i{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.25s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle.on i{left:21px}
+
+/* empty state demo */
+.empty{text-align:center;padding:34px 20px}
+.empty .e{font-size:46px;margin-bottom:14px;display:block;opacity:.85}
+.empty h4{font-family:var(--serif);font-size:23px;font-weight:600;margin-bottom:8px;color:var(--ink)}
+.empty p{font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:18px}
+
+/* ---------- BOTTOM NAV ---------- */
+.tabbar{position:absolute;bottom:0;left:0;right:0;height:88px;z-index:40;
+  background:linear-gradient(0deg,rgba(252,249,244,.99),rgba(252,249,244,.86));
+  backdrop-filter:blur(14px);border-top:1px solid var(--line);
+  display:flex;align-items:flex-start;padding:11px 18px 0}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;color:var(--faint);font-size:9.5px;letter-spacing:.4px}
+.tab svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.7}
+.tab.on{color:var(--crimson)}
+.tab.add{margin-top:-22px}
+.tab.add .fab{width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--crimson-bright),var(--crimson-deep));display:flex;align-items:center;justify-content:center;box-shadow:0 12px 26px -8px rgba(164,22,26,.6);color:#fff}
+.tab.add .fab svg{width:26px;height:26px;stroke:#fff;stroke-width:2.4}
+.tab.add span{color:var(--crimson);margin-top:5px}
+
+/* toast */
+.toast{position:absolute;left:50%;bottom:108px;transform:translateX(-50%) translateY(20px);z-index:80;
+  background:linear-gradient(135deg,var(--crimson-bright),var(--crimson-deep));color:#fff;font-weight:600;font-size:13px;
+  padding:13px 20px;border-radius:30px;box-shadow:0 14px 30px -8px rgba(164,22,26,.5);opacity:0;pointer-events:none;
+  transition:.4s cubic-bezier(.2,.8,.2,1);display:flex;align-items:center;gap:8px;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* success overlay */
+.success{position:absolute;inset:0;z-index:70;background:linear-gradient(178deg,#fdfaf5,#f7efe3);display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px}
+.success.show{display:flex;animation:fade .4s}
+.success .ring{width:110px;height:110px;border-radius:50%;background:radial-gradient(circle at 38% 32%,#e7c98a,#c79a4e 45%,#a4161a 100%);display:flex;align-items:center;justify-content:center;font-size:48px;margin-bottom:24px;color:#fff;box-shadow:0 14px 40px -8px rgba(164,22,26,.45);animation:pop .5s cubic-bezier(.2,1.5,.4,1)}
+@keyframes pop{0%{transform:scale(.4);opacity:0}100%{transform:scale(1);opacity:1}}
+.success h3{font-family:var(--serif);font-size:29px;font-weight:600;margin-bottom:10px;color:var(--ink)}
+.success p{font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:14px;max-width:280px}
+.success .ai-mini{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);padding:14px;font-size:12.5px;color:var(--ink);line-height:1.5;max-width:300px;margin-bottom:26px;text-align:left;box-shadow:0 10px 24px -18px rgba(90,40,20,.4)}
+.success .ai-mini b{color:var(--gold-ink);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:6px}
+
+.ss-root{width:100%;overflow:hidden}
+.ss-scaler{width:390px;transform-origin:top left}
+</style>
+</head>
+<body>
+<div class="ss-root"><div class="ss-scaler">
+<div class="phone">
+    <div class="screen-wrap" id="wrap">
+      <div class="stars" id="stars"></div>
+      <div class="notch"></div>
+      <div class="statusbar">
+        <span>9:41</span>
+        <span class="dots">
+          <svg viewBox="0 0 18 12"><path d="M1 11h2V7H1zM5 11h2V5H5zM9 11h2V3H9zM13 11h2V1h-2z" fill="currentColor"/></svg>
+          <svg viewBox="0 0 18 12"><path d="M9 2C5 2 2 4 1 5l8 7 8-7c-1-1-4-3-8-3z" fill="currentColor" opacity=".9"/></svg>
+          <svg viewBox="0 0 24 12"><rect x="1" y="2" width="19" height="8" rx="2" fill="none" stroke="currentColor"/><rect x="2.5" y="3.5" width="14" height="5" rx="1" fill="currentColor"/><rect x="21" y="4" width="2" height="4" rx="1" fill="currentColor"/></svg>
+        </span>
+      </div>
+
+      <!-- ============ WELCOME ============ -->
+      <section class="screen active" id="welcome">
+        <div class="scroll nonav">
+          <div class="orb"><div class="glyph">🌙</div></div>
+          <div class="brand-line">Psychic Source presents</div>
+          <h2>SoulSync</h2>
+          <div class="brand-tag">Life's possibilities. Revealed.</div>
+          <p class="lead">Your journey doesn't begin and end with a reading. Track your insights, reflections, and growth — all in one place.</p>
+          <div class="feat"><div class="e">🪞</div><div><b>Reflect daily</b><span>Quick check-ins capture how you feel and what's shifting.</span></div></div>
+          <div class="feat"><div class="e">🧭</div><div><b>See your story</b><span>My Journey weaves events, readings & moments into one timeline.</span></div></div>
+          <div class="feat"><div class="e">✨</div><div><b>Discover patterns</b><span>AI gently surfaces the themes you might not notice yourself.</span></div></div>
+          <div class="actions">
+            <button class="btn" onclick="go('home')">Begin Your Journey</button>
+            <button class="btn ghost" style="margin-top:11px" onclick="go('home')">I already have an account</button>
+          </div>
+          <p class="faint" style="font-size:11px;margin-top:18px;line-height:1.5">SoulSync helps you reflect — it is not a psychic. Your human advisors stay at the heart of every reading.</p>
+        </div>
+      </section>
+
+      <!-- ============ HOME ============ -->
+      <section class="screen" id="home">
+        <div class="scroll">
+          <div class="hero">
+            <div class="hi">Good evening,<br><em>Elena</em> ✦</div>
+            <div class="sub">Tuesday, June 2 · Day 47 of your journey</div>
+          </div>
+
+          <div class="card prompt-card" style="margin-top:18px">
+            <div class="eyebrow">Tonight's reflection</div>
+            <div class="q">"Where did you feel most like yourself today?"</div>
+            <button class="btn sm" onclick="go('reflect')">Reflect now →</button>
+          </div>
+
+          <div class="stats" style="margin-top:16px">
+            <div class="stat"><div class="n">47</div><div class="l">Day streak</div></div>
+            <div class="stat"><div class="n">23</div><div class="l">Reflections</div></div>
+            <div class="stat"><div class="n">3</div><div class="l">Readings</div></div>
+          </div>
+
+          <div class="card" style="margin-top:16px">
+            <div class="ai">
+              <div class="av">✦</div>
+              <div class="body">
+                <div class="label">✨ This week's insight</div>
+                <p>You've mentioned "choosing myself" in four entries this week — the same phrase your March reading with Celeste circled around. Your confidence language is growing.</p>
+              </div>
+            </div>
+            <button class="btn ghost sm" style="margin-top:13px;width:100%" onclick="go('insights')">Explore my patterns</button>
+          </div>
+
+          <div class="shead"><h3>Quick actions</h3></div>
+          <div class="qa">
+            <button onclick="go('add')"><span class="e">📌</span><b>Add life event</b><span>Mark a moment</span></button>
+            <button onclick="go('questions')"><span class="e">💭</span><b>Save a question</b><span>For next time</span></button>
+            <button onclick="go('journey')"><span class="e">🧭</span><b>My Journey</b><span>See the thread</span></button>
+            <button onclick="go('readings')"><span class="e">🔮</span><b>Reading recall</b><span>Past insights</span></button>
+          </div>
+
+          <div class="shead"><h3>Continue your journey</h3><a onclick="go('journey')">View all</a></div>
+          <div class="card" onclick="go('journey')" style="cursor:pointer">
+            <div class="theme-band" style="margin:0">
+              <div class="th">🌱 Career Transition <span class="pp">Active theme</span></div>
+              <p>3 connected moments over 5 months. AI sees a clear arc from "stuck" to "in motion."</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ MY JOURNEY ============ -->
+      <section class="screen" id="journey">
+        <div class="scroll">
+          <div class="topbar"><div class="ttl">My Journey</div><div class="ic" onclick="go('insights')">✨</div></div>
+          <p class="muted" style="font-size:13px;padding:0 2px 12px;line-height:1.5">The story of you — events, reflections, readings & milestones, woven together over time.</p>
+          <div class="chips">
+            <div class="chip on">All</div><div class="chip">Events</div><div class="chip">Reflections</div><div class="chip">Readings</div><div class="chip">Milestones</div>
+          </div>
+
+          <div class="theme-band" style="margin-top:14px">
+            <div class="th">🌱 Career Transition <span class="pp">AI theme</span></div>
+            <p>"Your entries show increasing confidence and willingness to embrace change over the past six months."</p>
+          </div>
+
+          <div class="tl">
+            <div class="node">
+              <div class="dot" style="border-color:var(--crimson)">📌</div>
+              <div class="date">JUNE 2026</div>
+              <div class="ncard">
+                <span class="kind k-mile">Milestone</span>
+                <b>Accepted the new role 🎉</b>
+                <p>Said yes to the creative lead position. Nervous and proud in equal measure.</p>
+              </div>
+            </div>
+            <div class="node">
+              <div class="dot" style="border-color:var(--berry)">🔮</div>
+              <div class="date">MAY 2026</div>
+              <div class="ncard">
+                <span class="kind k-reading">Reading · Celeste</span>
+                <b>"Trust the version of you that's emerging"</b>
+                <p>Guidance theme: stepping into leadership. Saved 2 key insights to revisit.</p>
+              </div>
+            </div>
+            <div class="node">
+              <div class="dot" style="border-color:var(--sage)">🪞</div>
+              <div class="date">APRIL 2026</div>
+              <div class="ncard">
+                <span class="kind k-reflect">Reflection</span>
+                <b>"Felt brave for once"</b>
+                <p>Applied to two roles I'd have talked myself out of last year. Mood: hopeful.</p>
+              </div>
+            </div>
+            <div class="node">
+              <div class="dot">🌿</div>
+              <div class="date">MARCH 2026</div>
+              <div class="ncard">
+                <span class="kind k-event">Life event</span>
+                <b>Started exploring opportunities</b>
+                <p>Updated my portfolio after months of putting it off. A door cracked open.</p>
+              </div>
+            </div>
+            <div class="node">
+              <div class="dot" style="border-color:var(--sage)">😔</div>
+              <div class="date">JANUARY 2026</div>
+              <div class="ncard">
+                <span class="kind k-reflect">Reflection</span>
+                <b>"Feeling stuck at work"</b>
+                <p>Same desk, same dread. Wondering if it's me or the role. Mood: heavy.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:6px">
+            <div class="ai">
+              <div class="av">✦</div>
+              <div class="body">
+                <div class="label">✨ AI observation</div>
+                <p>Five months ago you wrote "stuck." This month you wrote "proud." That's the shape of growth — want me to summarize this arc for you?</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ ADD LIFE EVENT ============ -->
+      <section class="screen" id="add">
+        <div class="scroll">
+          <div class="topbar"><div class="back" onclick="back()">‹</div><div class="ttl" style="font-size:21px">Add to Journey</div><div style="width:38px"></div></div>
+          <p class="muted" style="font-size:13px;padding:0 2px 6px;line-height:1.5">Mark a moment that matters. It becomes part of your timeline and helps AI see your story.</p>
+
+          <div class="field">
+            <label>WHAT KIND OF MOMENT?</label>
+            <div class="seg" id="evkind">
+              <div class="o on">📌 Life event</div><div class="o">🏆 Milestone</div><div class="o">💞 Relationship</div><div class="o">💼 Career</div><div class="o">🌿 Personal</div>
+            </div>
+          </div>
+          <div class="field"><label>TITLE</label><input id="evtitle" placeholder="e.g. Accepted the new role" value="Accepted the new role"></div>
+          <div class="field"><label>WHEN</label><input type="text" value="June 2, 2026"></div>
+          <div class="field"><label>WHAT HAPPENED?</label><textarea placeholder="Describe the moment in your own words…">Said yes to the creative lead position after months of doubting myself.</textarea></div>
+          <div class="field">
+            <label>HOW DID IT FEEL?</label>
+            <div class="seg" id="evfeel">
+              <div class="o on">Proud</div><div class="o on">Nervous</div><div class="o">Relieved</div><div class="o">Hopeful</div><div class="o">Uncertain</div><div class="o">Grateful</div>
+            </div>
+          </div>
+          <button class="btn" style="margin-top:24px" onclick="saveEvent()">✦ Add to My Journey</button>
+          <button class="btn ghost" style="margin-top:11px" onclick="back()">Cancel</button>
+        </div>
+      </section>
+
+      <!-- ============ DAILY REFLECTION ============ -->
+      <section class="screen" id="reflect">
+        <div class="scroll">
+          <div class="topbar"><div class="back" onclick="back()">‹</div><div class="ttl" style="font-size:21px">Daily Reflection</div><div style="width:38px"></div></div>
+          <div class="card prompt-card">
+            <div class="eyebrow">Tonight's prompt</div>
+            <div class="q" style="margin-bottom:0">"Where did you feel most like yourself today?"</div>
+          </div>
+
+          <div class="field">
+            <label>HOW ARE YOU FEELING?</label>
+            <div class="moods" id="moods">
+              <div class="m"><span class="e">😣</span><div class="l">Heavy</div></div>
+              <div class="m"><span class="e">😕</span><div class="l">Low</div></div>
+              <div class="m"><span class="e">😐</span><div class="l">Okay</div></div>
+              <div class="m on"><span class="e">🙂</span><div class="l">Good</div></div>
+              <div class="m"><span class="e">😊</span><div class="l">Radiant</div></div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>ENERGY LEVEL</label>
+            <input type="range" class="range" min="0" max="100" value="72">
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--faint);margin-top:6px"><span>Drained</span><span>Energized</span></div>
+          </div>
+
+          <div class="field"><label>A WIN TODAY 🌟</label><textarea style="min-height:54px" placeholder="Even a small one counts…">Spoke up in the team meeting instead of staying quiet.</textarea></div>
+          <div class="field"><label>A CHALLENGE 🌧️</label><textarea style="min-height:54px" placeholder="What weighed on you?">Still second-guessing whether I made the right call.</textarea></div>
+          <div class="field"><label>ANYTHING ON YOUR MIND?</label><textarea placeholder="Let it out…">Kept thinking about what Celeste said — to trust the version of me that's emerging. Maybe she's right.</textarea></div>
+
+          <button class="btn" style="margin-top:22px" onclick="saveReflection()">✦ Save Reflection</button>
+        </div>
+      </section>
+
+      <!-- ============ QUESTION KEEPER ============ -->
+      <section class="screen" id="questions">
+        <div class="scroll">
+          <div class="topbar"><div class="ttl">Question Keeper</div><div class="ic" onclick="toast('Question added ✦')">＋</div></div>
+          <p class="muted" style="font-size:13px;padding:0 2px 14px;line-height:1.5">Hold onto the questions that matter. AI reconnects you with them as your story unfolds — and brings them to your next reading.</p>
+
+          <div class="qitem">
+            <div class="mk">"</div>
+            <div style="flex:1">
+              <div class="qt">What should I focus on next in my career?</div>
+              <div class="meta">Saved Jan 14 · For my next reading</div>
+              <div class="reconnect">✨ <span>Your June milestone may have answered this. Want to revisit it?</span></div>
+            </div>
+          </div>
+          <div class="qitem">
+            <div class="mk">"</div>
+            <div style="flex:1">
+              <div class="qt">Why does this feeling of "not enough" keep repeating?</div>
+              <div class="meta">Saved Feb 28 · Recurring theme</div>
+              <div class="reconnect">✨ <span>This has appeared in 6 reflections. It softened after April — notice the shift.</span></div>
+            </div>
+          </div>
+          <div class="qitem">
+            <div class="mk">"</div>
+            <div style="flex:1">
+              <div class="qt">Am I ready for a bigger change?</div>
+              <div class="meta">Saved Mar 9 · Open</div>
+            </div>
+          </div>
+          <div class="qitem">
+            <div class="mk">"</div>
+            <div style="flex:1">
+              <div class="qt">What lesson is this season teaching me?</div>
+              <div class="meta">Saved May 21 · Open</div>
+            </div>
+          </div>
+
+          <button class="btn ghost" style="margin-top:6px" onclick="toast('New question saved ✦')">＋ Save a new question</button>
+        </div>
+      </section>
+
+      <!-- ============ AI INSIGHTS ============ -->
+      <section class="screen" id="insights">
+        <div class="scroll">
+          <div class="topbar"><div class="back" onclick="back()">‹</div><div class="ttl" style="font-size:22px">AI Patterns</div><div style="width:38px"></div></div>
+          <div class="card" style="background:linear-gradient(140deg,rgba(164,22,26,.08),rgba(189,149,80,.16));border-color:var(--line-strong)">
+            <div class="ai">
+              <div class="av">✦</div>
+              <div class="body">
+                <div class="label">✨ What I'm noticing</div>
+                <p>Across 23 reflections and 3 readings, one thread stands out: you're learning to trust yourself. Here's what your story is showing.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="shead"><h3>Recurring themes</h3></div>
+          <div class="pattern" style="background:rgba(189,149,80,.08)">
+            <h4>🌱 Career Transition</h4>
+            <p>From "stuck" in January to "proud" in June — your most active theme.</p>
+            <div class="bar"><i style="width:88%"></i></div>
+          </div>
+          <div class="pattern" style="background:rgba(168,69,106,.07)">
+            <h4>💞 Self-Worth & "Choosing Myself"</h4>
+            <p>Appears in 9 entries. The "not enough" language fades noticeably after April.</p>
+            <div class="bar"><i style="width:64%"></i></div>
+          </div>
+          <div class="pattern" style="background:rgba(111,138,111,.08)">
+            <h4>🤝 Reconnection</h4>
+            <p>Reaching out to old friends shows up as you grow more confident.</p>
+            <div class="bar"><i style="width:41%"></i></div>
+          </div>
+
+          <div class="shead"><h3>Emotional trend</h3></div>
+          <div class="card">
+            <div class="trend"><span class="lab">Jan–Feb</span><div class="bar" style="flex:1"><i style="width:30%;background:var(--berry)"></i></div></div>
+            <div class="trend"><span class="lab">Mar–Apr</span><div class="bar" style="flex:1"><i style="width:58%"></i></div></div>
+            <div class="trend"><span class="lab">May–Jun</span><div class="bar" style="flex:1"><i style="width:82%;background:linear-gradient(90deg,var(--gold),var(--sage))"></i></div></div>
+            <p class="faint" style="font-size:11.5px;margin-top:12px;line-height:1.5">Overall mood trending upward. Your highest-energy days cluster around moments of decision.</p>
+          </div>
+
+          <div class="shead"><h3>Growth moment</h3></div>
+          <div class="card">
+            <div class="ai"><div class="av">✦</div><div class="body"><div class="label">🌟 Recognized</div>
+            <p>You did the thing you were afraid of in April — and again in June. That's not luck. That's a pattern of courage forming.</p></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ MONTHLY REFLECTION ============ -->
+      <section class="screen" id="monthly">
+        <div class="scroll">
+          <div class="topbar"><div class="back" onclick="back()">‹</div><div class="ttl" style="font-size:21px">Monthly Reflection</div><div style="width:38px"></div></div>
+          <div class="month-hero">
+            <div class="mo">Your month in review</div>
+            <h2>May 2026</h2>
+            <p>"A month of stepping forward. You stopped asking permission to grow."</p>
+          </div>
+
+          <div class="shead"><h3>Key themes</h3></div>
+          <div class="chips" style="flex-wrap:wrap">
+            <div class="chip on">Courage</div><div class="chip on">Career change</div><div class="chip on">Self-trust</div><div class="chip on">Reconnection</div>
+          </div>
+
+          <div class="card" style="margin-top:14px">
+            <div class="kv"><div class="e">🌟</div><div><b>Wins worth remembering</b><span>Spoke up in meetings, applied for the lead role, reconnected with an old friend.</span></div></div>
+            <div class="kv"><div class="e">🌧️</div><div><b>Challenges you carried</b><span>Lingering self-doubt and fear of making the "wrong" choice.</span></div></div>
+            <div class="kv"><div class="e">🌱</div><div><b>Growth moment</b><span>You acted before you felt fully ready — twice. That's new for you.</span></div></div>
+            <div class="kv"><div class="e">🔮</div><div><b>From your reading</b><span>Celeste's guidance about "trusting the emerging you" echoed through 4 entries.</span></div></div>
+          </div>
+
+          <div class="shead"><h3>Worth revisiting</h3></div>
+          <div class="card">
+            <div class="ai"><div class="av">✦</div><div class="body"><div class="label">💭 A question for you</div>
+            <p>"What would it look like to fully believe you've earned this?" — carry it into your next reading.</p></div></div>
+            <button class="btn ghost sm" style="width:100%;margin-top:13px" onclick="go('readings')">Book a reading to explore →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ READING HISTORY ============ -->
+      <section class="screen" id="readings">
+        <div class="scroll">
+          <div class="topbar"><div class="ttl" style="font-size:22px">Reading Recall</div><div class="ic" onclick="toast('Opening advisors…')">🔮</div></div>
+          <p class="muted" style="font-size:13px;padding:0 2px 14px;line-height:1.5">Every reading's insights, saved and searchable — and woven into My Journey so guidance never gets lost.</p>
+
+          <div class="read">
+            <div class="rhead">
+              <div class="ava">C</div>
+              <div><div class="nm">Celeste M.</div><div class="dt">May 18, 2026 · 22 min</div></div>
+              <div class="type">Tarot</div>
+            </div>
+            <p class="sum">Explored the career decision. Celeste encouraged trusting intuition over fear and "the version of you that's emerging."</p>
+            <div class="tags"><span>Leadership</span><span>Self-trust</span><span>Timing</span></div>
+            <button class="btn ghost sm" style="width:100%;margin-top:12px" onclick="toast('2 insights saved to Journey ✦')">View saved insights →</button>
+          </div>
+
+          <div class="read">
+            <div class="rhead">
+              <div class="ava">R</div>
+              <div><div class="nm">Raphael D.</div><div class="dt">Mar 30, 2026 · 18 min</div></div>
+              <div class="type">Clairvoyant</div>
+            </div>
+            <p class="sum">Discussed feeling stuck. Theme of "doors you haven't tried." Suggested small actions over big leaps.</p>
+            <div class="tags"><span>Change</span><span>Patience</span><span>Action</span></div>
+          </div>
+
+          <div class="read">
+            <div class="rhead">
+              <div class="ava">L</div>
+              <div><div class="nm">Luna V.</div><div class="dt">Jan 9, 2026 · 25 min</div></div>
+              <div class="type">Mediumship</div>
+            </div>
+            <p class="sum">Early-year check-in. Named a recurring "not enough" feeling and where it might come from.</p>
+            <div class="tags"><span>Self-worth</span><span>Roots</span><span>Release</span></div>
+          </div>
+
+          <button class="btn" style="margin-top:6px" onclick="toast('Finding available advisors…')">🔮 Book your next reading</button>
+        </div>
+      </section>
+
+      <!-- ============ PROFILE ============ -->
+      <section class="screen" id="profile">
+        <div class="scroll">
+          <div class="topbar"><div class="ttl">Profile</div><div class="ic" onclick="toast('Settings synced')">⚙</div></div>
+          <div class="card pcard">
+            <div class="pa">E</div>
+            <h2>Elena Marsh</h2>
+            <div class="since">✦ On a journey since Apr 2026</div>
+          </div>
+          <div class="stats" style="margin-top:14px">
+            <div class="stat"><div class="n">47</div><div class="l">Day streak</div></div>
+            <div class="stat"><div class="n">23</div><div class="l">Reflections</div></div>
+            <div class="stat"><div class="n">4</div><div class="l">Themes</div></div>
+          </div>
+
+          <div class="shead"><h3>Your journey</h3></div>
+          <div class="card" style="padding:4px 16px">
+            <div class="prow" onclick="go('monthly')"><div class="e">📅</div><div class="t">Monthly reflections</div><div class="ch">›</div></div>
+            <div class="prow" onclick="go('insights')"><div class="e">✨</div><div class="t">AI patterns & insights</div><div class="ch">›</div></div>
+            <div class="prow" onclick="go('readings')"><div class="e">🔮</div><div class="t">Reading recall</div><div class="ch">›</div></div>
+            <div class="prow" onclick="go('emptydemo')"><div class="e">🗂️</div><div class="t">Export my journey</div><div class="ch">›</div></div>
+          </div>
+
+          <div class="shead"><h3>Preferences</h3></div>
+          <div class="card" style="padding:4px 16px">
+            <div class="prow"><div class="e">🔔</div><div class="t">Daily reflection reminder</div><div class="toggle on" onclick="this.classList.toggle('on')"><i></i></div></div>
+            <div class="prow"><div class="e">✨</div><div class="t">Weekly AI insights</div><div class="toggle on" onclick="this.classList.toggle('on')"><i></i></div></div>
+            <div class="prow"><div class="e">🌙</div><div class="t">Monthly reflection report</div><div class="toggle on" onclick="this.classList.toggle('on')"><i></i></div></div>
+            <div class="prow"><div class="e">🔒</div><div class="t">Private journal lock</div><div class="toggle" onclick="this.classList.toggle('on')"><i></i></div></div>
+          </div>
+
+          <div class="shead"><h3>Account</h3></div>
+          <div class="card" style="padding:4px 16px">
+            <div class="prow"><div class="e">👤</div><div class="t">Edit profile</div><div class="ch">›</div></div>
+            <div class="prow"><div class="e">🛡️</div><div class="t">Privacy & data</div><div class="v">Your reflections stay yours</div></div>
+            <div class="prow" onclick="go('welcome')"><div class="e">↩</div><div class="t" style="color:var(--crimson)">Sign out</div></div>
+          </div>
+          <p class="faint" style="font-size:11px;text-align:center;margin-top:18px;line-height:1.5">SoulSync supports your reflection. It is not a psychic and never predicts your future. Your advisors do the reading — SoulSync helps you remember.</p>
+        </div>
+      </section>
+
+      <!-- ============ EMPTY STATE DEMO ============ -->
+      <section class="screen" id="emptydemo">
+        <div class="scroll">
+          <div class="topbar"><div class="back" onclick="back()">‹</div><div class="ttl" style="font-size:21px">My Journey</div><div style="width:38px"></div></div>
+          <div class="empty">
+            <span class="e">🌑</span>
+            <h4>Your journey begins here</h4>
+            <p>Nothing on your timeline yet. Add your first reflection or life event, and watch your story take shape over time.</p>
+            <button class="btn" onclick="go('reflect')">✦ Write first reflection</button>
+            <button class="btn ghost" style="margin-top:11px" onclick="go('add')">Add a life event</button>
+          </div>
+          <div class="card" style="margin-top:8px">
+            <div class="ai"><div class="av">✦</div><div class="body"><div class="label">✨ A note from SoulSync</div>
+            <p>Empty-state demo. The real timeline (tap Journey below) shows Elena's populated six-month story.</p></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SUCCESS OVERLAY -->
+      <div class="success" id="success">
+        <div class="ring" id="succRing">✦</div>
+        <h3 id="succTitle">Saved to your journey</h3>
+        <p id="succMsg">Another thread added to your story.</p>
+        <div class="ai-mini" id="succAi"><b>✨ AI just noticed</b><span id="succAiTxt"></span></div>
+        <button class="btn" style="max-width:300px" onclick="closeSuccess('journey')">See it on My Journey →</button>
+        <button class="btn ghost" style="max-width:300px;margin-top:11px" onclick="closeSuccess('home')">Back home</button>
+      </div>
+
+      <!-- TOAST -->
+      <div class="toast" id="toast">✦ Saved</div>
+
+      <!-- BOTTOM NAV -->
+      <nav class="tabbar" id="tabbar">
+        <div class="tab" data-s="home" onclick="go('home')">
+          <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg><span>Home</span></div>
+        <div class="tab" data-s="journey" onclick="go('journey')">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="13" r="2"/><path d="M12 7v4M12 11l4 1M11 7l-4 10"/></svg><span>Journey</span></div>
+        <div class="tab add" onclick="go('reflect')">
+          <div class="fab"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></div><span>Reflect</span></div>
+        <div class="tab" data-s="questions" onclick="go('questions')">
+          <svg viewBox="0 0 24 24"><path d="M9 9a3 3 0 116 0c0 2-3 2.5-3 4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg><span>Questions</span></div>
+        <div class="tab" data-s="profile" onclick="go('profile')">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-4 3.5-6 7-6s7 2 7 6"/></svg><span>You</span></div>
+      </nav>
+    </div>
+  </div>
+</div></div>
+<script>
+// faint gold sparkle field
+(function(){const s=document.getElementById('stars');for(let i=0;i<26;i++){const d=document.createElement('i');const sz=Math.random()*2+0.6;d.style.width=d.style.height=sz+'px';d.style.left=Math.random()*100+'%';d.style.top=Math.random()*100+'%';d.style.animationDelay=(Math.random()*5)+'s';s.appendChild(d);}})();
+
+let current='welcome';
+const noNav=['welcome'];
+
+function go(id){
+  const cur=document.querySelector('.screen.active');
+  if(cur) cur.classList.remove('active');
+  const next=document.getElementById(id);
+  next.classList.add('active');
+  current=id;
+  const sc=next.querySelector('.scroll'); if(sc) sc.scrollTop=0;
+  document.getElementById('tabbar').style.display = noNav.includes(id)?'none':'flex';
+  document.querySelectorAll('.tab[data-s]').forEach(t=>{
+    t.classList.toggle('on', t.dataset.s===id);
+  });
+  if(id==='reflect'){document.querySelectorAll('.tab[data-s]').forEach(t=>t.classList.remove('on'));}
+}
+function back(){
+  const map={add:'home',reflect:'home',insights:'journey',monthly:'profile',emptydemo:'profile'};
+  go(map[current]||'home');
+}
+
+document.addEventListener('click',e=>{
+  const o=e.target.closest('.seg .o'); if(o){o.classList.toggle('on');}
+  const m=e.target.closest('.moods .m'); if(m){m.parentNode.querySelectorAll('.m').forEach(x=>x.classList.remove('on'));m.classList.add('on');}
+  const c=e.target.closest('.chips .chip'); if(c && !c.closest('#monthly')){c.parentNode.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));c.classList.add('on');}
+});
+
+let tt;
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2100);}
+
+function showSuccess(title,msg,ai,glyph){
+  document.getElementById('succTitle').textContent=title;
+  document.getElementById('succMsg').textContent=msg;
+  document.getElementById('succAiTxt').textContent=ai;
+  document.getElementById('succRing').textContent=glyph||'✦';
+  document.getElementById('success').classList.add('show');
+}
+function closeSuccess(to){document.getElementById('success').classList.remove('show');go(to);}
+
+function saveEvent(){
+  showSuccess('Added to your journey','"Accepted the new role" is now part of your timeline.',
+  'This connects to your January "feeling stuck" entry — that\'s a five-month arc from doubt to decision. I\'ve grouped them under your Career Transition theme.','🏆');
+}
+function saveReflection(){
+  showSuccess('Reflection saved','Day 47. Your streak continues to glow.',
+  'That\'s the 4th time this week you\'ve mentioned trusting yourself. The "not enough" language you wrote in winter hasn\'t appeared once this month.','🪞');
+}
+</script>
+<script>
+(function(){
+  function fit(){
+    var sc=document.querySelector('.ss-scaler'); if(!sc) return;
+    var w=document.documentElement.clientWidth||window.innerWidth||390;
+    var k=w/390;
+    sc.style.transform='scale('+k+')';
+    var h=Math.round(818*k);
+    document.body.style.height=h+'px';
+    try{ if(window.parent!==window){ window.parent.postMessage({soulsyncHeight:h},'*'); } }catch(e){}
+  }
+  window.addEventListener('resize',fit);
+  fit(); setTimeout(fit,200); setTimeout(fit,800);
+})();
+</script>
+</body>
+</html>
